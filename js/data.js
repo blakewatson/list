@@ -1,4 +1,27 @@
-const queue = [];
+import { loadObject, saveObject } from './storage.js';
+
+/* Items */
+
+export const getItems = () => {
+  return loadObject('list-items');
+};
+
+export const setItems = (items) => {
+  saveObject('list-items', items);
+};
+
+/* Request Queue */
+
+let queue = [];
+
+// local storage of queue
+const getQueue = () => {
+  return loadObject('list-queue');
+};
+
+const setQueue = (queue) => {
+  saveObject('list-queue', queue);
+};
 
 export const RequestType = {
   getItems: 'getItems',
@@ -14,10 +37,14 @@ export const queueRequest = (requestType, payload) => {
     requestType,
     payload
   });
+
+  setQueue(queue);
 };
 
 // kick off processing of requests
-export const initQueue = () => {};
+export const initQueue = () => {
+  queue = getQueue() || [];
+};
 
 export const processQueue = async () => {
   if (!queue.length) {
@@ -37,9 +64,12 @@ export const processQueue = async () => {
     if (!data.success) {
       // put items back into queue
       queue = [...requests, ...queue];
+      setQueue(queue);
     }
   } catch (err) {
     // put items back into queue
     queue = [...requests, ...queue];
+    setQueue(queue);
+    throw new Error(err);
   }
 };

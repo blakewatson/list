@@ -5,40 +5,92 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Groceries</title>
-    <link rel="stylesheet" href="css/pure-min.min.css" />
+    <link rel="stylesheet" href="css/pure-nr-min.css" />
+    <link rel="stylesheet" href="css/pure-grids-min.css" />
     <link rel="stylesheet" href="css/spacing.css" />
     <link rel="stylesheet" href="css/app.css" />
     <script defer src="js/libs/vue.global.js"></script>
-    <script defer src="js/libs/bin.min.js"></script>
     <script defer type="module" src="js/app.js"></script>
   </head>
 
   <body>
     <div id="app">
-      <h1 class="site-title">Grocery List</h1>
+      <div class="app-header">
+        <h1 class="site-title">Grocery List</h1>
 
-      <ul class="grocery-list">
-        <li v-for="(item, idx) in items">
-          <input
-            :id="`item-${idx}`"
-            class="mr-sm"
-            type="checkbox"
-            v-model="items[idx].done"
-          />
-          <label :for="`item-${idx}`">{{ item.name }}</label>
+        <div class="app-actions">
+          <button @click="uncheckAll" class="pure-button">Uncheck All</button>
+          <button @click="removeAllItems" class="pure-button ml-xs">
+            Remove All
+          </button>
+        </div>
+      </div>
+
+      <ul class="list">
+        <li class="list-item" v-for="(item, idx) in items">
+          <label class="list-item-activator" v-if="item.id !== editingItemId">
+            <input
+              :checked="item.done"
+              @input="checkItem(item, $event)"
+              class="mr-sm"
+              type="checkbox"
+            />
+            <div>{{ item.name }}</div>
+          </label>
+
+          <app-edit-form :item="item" @edited="editItem" v-else></app-edit-form>
+
+          <button
+            @click="showEditForm(item.id)"
+            class="emoji-button pure-button ml-xs"
+            v-if="!editingItemId"
+          >
+            ✏️
+          </button>
+
+          <button
+            @click="removeItem(item.id)"
+            class="emoji-button pure-button ml-xxs"
+            v-if="!editingItemId"
+          >
+            ❌
+          </button>
         </li>
       </ul>
 
-      <form @submit.prevent="addItem" class="pure-form">
+      <form
+        @submit.prevent="addItem"
+        class="item-form pure-form"
+        v-if="!editingItemId"
+      >
         <fieldset>
           <input
-            class="pure-input-1"
+            class="pure-input-1 mr-sm"
             placeholder="Type item here"
+            ref="addFormInput"
             type="text"
             v-model="text"
           />
+
+          <button class="emoji-button pure-button">➕</button>
         </fieldset>
       </form>
     </div>
+
+    <template id="edit-form">
+      <form @submit.prevent="editItem" class="item-form pure-form">
+        <fieldset>
+          <input
+            class="pure-input-1 mr-sm"
+            placeholder="Type item here"
+            ref="textInput"
+            type="text"
+            v-model="text"
+          />
+
+          <button class="emoji-button pure-button" type="submit">✔️</button>
+        </fieldset>
+      </form>
+    </template>
   </body>
 </html>

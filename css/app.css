@@ -25,26 +25,62 @@ html {
   max-width: 500px;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 12px;
+}
+
 .site-title {
-  margin-top: 0;
+  margin: 0;
   font-size: 1.2rem;
 }
 
-.grocery-list {
+.emoji-button {
+  padding: 0.4545em 0.5rem;
+  font-size: 22px;
+  line-height: 1em;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  background-color: #eee;
+}
+
+.list {
+  border-top: 1px solid #ccc;
   padding-left: 0;
   list-style: none;
 }
 
-.grocery-list li {
+.list-item {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 1em;
+  border-bottom: 1px solid #ccc;
 }
 
-.grocery-list input[type='checkbox'] {
+.list-item-activator {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.5em;
+}
+
+.list input[type='checkbox'] {
   flex-shrink: 0;
   position: relative;
   top: 0.1em;
   width: 1em;
   height: 1em;
+}
+
+.item-form {
+  width: 100%;
+}
+
+.item-form fieldset {
+  display: flex;
 }
