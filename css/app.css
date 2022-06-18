@@ -43,6 +43,11 @@ html {
   font-size: 1.2rem;
 }
 
+.danger-button {
+  background-color: #d72d2d;
+  color: white;
+}
+
 .emoji-button {
   padding: 0.4545em 0.5rem;
   font-size: 22px;
