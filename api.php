@@ -26,7 +26,7 @@ Expect one or more requests and process them in order.
 Need to accept these request types:
 
 'getItems' - no payload
-'addItems' - payload of [ { "name": "Foo" }, ... ]
+'addItems' - payload of [ { "id": "blah", "name": "Foo" }, ... ]
 'editItems' - payload of [ { id: "blah", "name": "Foo", "done": true }, ... ]
 'removeItems' - payload of [ "idToRemove", "anotherIdToRemove", ... ]
 'removeAll' - no payload
