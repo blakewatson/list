@@ -1,0 +1,50 @@
+/*
+When setting the primary font stack, apply it to the Pure grid units along
+with "html", "button", "input", "select", and "textarea". Pure Grids use
+specific font stacks to ensure the greatest OS/browser compatibility.
+*/
+html,
+button,
+input,
+select,
+textarea,
+.pure-g [class*='pure-u'] {
+  /* Set your content font stack here: */
+  font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui,
+    helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial,
+    sans-serif;
+}
+
+html {
+  font-size: 18px;
+}
+
+#app {
+  margin: 0 auto;
+  padding: 1rem;
+  max-width: 500px;
+}
+
+.site-title {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.grocery-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.grocery-list li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1em;
+}
+
+.grocery-list input[type='checkbox'] {
+  flex-shrink: 0;
+  position: relative;
+  top: 0.1em;
+  width: 1em;
+  height: 1em;
+}
