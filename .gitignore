@@ -13,3 +13,5 @@ build
 dist
 vendor
 ._*
+.env
+/data
