@@ -130,3 +130,16 @@ app.component('app-edit-form', {
 });
 
 app.mount('#app');
+
+// register service worker
+if (!window.location.origin.includes('localhost')) {
+  if ('serviceWorker' in navigator) {
+    console.log('Registering service worker...');
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) =>
+        console.log('Server worker registered.', registration)
+      )
+      .catch((reason) => console.error(reason));
+  }
+}
