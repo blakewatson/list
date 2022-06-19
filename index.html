@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Groceries</title>
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="css/pure-nr-min.css" />
     <link rel="stylesheet" href="css/pure-grids-min.css" />
     <link rel="stylesheet" href="css/spacing.css" />
@@ -31,14 +32,18 @@
 
       <ul class="list">
         <li class="list-item" v-for="(item, idx) in items">
-          <label class="list-item-activator" v-if="item.id !== editingItemId">
+          <label
+            :class="{ done: item.done }"
+            class="list-item-activator"
+            v-if="item.id !== editingItemId"
+          >
             <input
               :checked="item.done"
               @input="checkItem(item, $event)"
               class="mr-sm"
               type="checkbox"
             />
-            <div>{{ item.name }}</div>
+            <div class="list-item-name">{{ item.name }}</div>
           </label>
 
           <app-edit-form :item="item" @edited="editItem" v-else></app-edit-form>

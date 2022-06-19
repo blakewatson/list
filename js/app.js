@@ -31,7 +31,7 @@ const app = createApp({
 
       this.text = '';
       this.$refs['addFormInput'].focus();
-      this.$refs['addFormInput'].scrollIntoView();
+      this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
 
       this.items.push(item);
       //queueRequest(RequestType.addItems, [item]);
@@ -97,7 +97,7 @@ const app = createApp({
 
   mounted() {
     this.$refs['addFormInput'].focus();
-    this.$refs['addFormInput'].scrollIntoView();
+    this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
   }
 });
 

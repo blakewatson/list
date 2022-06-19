@@ -67,6 +67,11 @@ html {
   border-bottom: 1px solid #ccc;
 }
 
+.done .list-item-name {
+  text-decoration: line-through;
+  color: #777;
+}
+
 .list-item-activator {
   display: flex;
   align-items: flex-start;
@@ -88,4 +93,5 @@ html {
 
 .item-form fieldset {
   display: flex;
+  padding: 0.5em 0;
 }
