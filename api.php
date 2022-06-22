@@ -17,7 +17,7 @@ Requests will be POST requests with a JSON body in the form of:
   "requests": [
     {
       "requestType": "addItems",
-      "payload": [ { "name": "Foo" }, ... ]
+      "payload": { "name": "Foo"... }
     }
   ]
 }
@@ -27,9 +27,9 @@ Expect one or more requests and process them in order.
 Need to accept these request types:
 
 'getItems' - no payload
-'addItems' - payload of [ { "id": "blah", "name": "Foo" }, ... ]
-'editItems' - payload of [ { id: "blah", "name": "Foo", "done": true }, ... ]
-'removeItems' - payload of [ "idToRemove", "anotherIdToRemove", ... ]
+'addItem' - payload of { id: "blah", "name": "Foo" }
+'editItem' - payload of { id: "blah", "name": "Foo", "done": true }
+'removeItem' - payload of id
 'removeAll' - no payload
 'uncheckAll' - no payload
 
@@ -43,96 +43,125 @@ Response should be JSON in the form of:
 OR...
 
 {
-  "success": false,
-  "error": "Error message"
+  "data": [{ id: "blah", "name": "Foo", "done": true }, ...],
+  "errors": ["Error message", "Error message 2" ...]
 }
 
 */
-class BMWList {
 
-  public $request_json = null;
+class BMWListApp {
+  // the literal http request
+  public $request;
+  public $data_file_list;
+  public $errors = [];
 
   function run() {
     
     $this->preliminary_checks();
 
-    //'getItems' - no payload
-    if(isset($_REQUEST['getItems'])) {
-      $this->get_items_handler();
+    // errors out on failure
+    $this->setup();
+
+    foreach($this->request->requests as $request) {
+      $this->handle_request($request);
     }
 
-    //'removeAll' - no payload
-    if(isset($_REQUEST['removeAll'])) {
-      $this->remove_all_handler();
-    }
+    // todo: don't rewrite unless list actually changed
+    $this->rewrite_list();
 
-    //'uncheckAll' - no payload
-    if(isset($_REQUEST['uncheckAll'])) {
-      $this->uncheck_all_handler();
-    };
-
-    // throws error on failure
-    $this->set_request_json();
-
-    //'addItems' - payload of [ { "id": "blah", "name": "Foo" }, ... ]
-    if(isset($_REQUEST['addItems'])) {
-      $this->add_items_handler();
-    }
-  }
-
-  function get_items_handler() {
-    echo file_get_contents($_ENV['DATA_FILE']);
+    echo $this->json_encode([
+      'data' => $this->data_file_list,
+      'errors' => $this->errors
+    ]);
     die;
   }
 
-  function remove_all_handler() {
-    $list = $this->json_encode([]);
-    file_put_contents($_ENV['DATA_FILE'], $list);
-    echo file_get_contents($_ENV['DATA_FILE']);
-    die;
+  function handle_request($request) {
+    switch ($request->requestType) {
+      case 'getItems':
+        // do nothing
+        break;
+      case 'removeAll':
+        $this->handle_remove_all();
+        break;
+      case 'uncheckAll':
+        $this->handle_uncheck_all();
+        break;
+      case 'addItem':
+        $this->handle_add_item($request->payload);
+        break;
+      case 'editItem':
+        $this->handle_edit_item($request->payload);
+        break;
+      case 'removeItem':
+        $this->handle_remove_item($request->payload);
+        break;
+    }
   }
 
-  function uncheck_all_handler() {
-    $list = $this->json_decode(file_get_contents($_ENV['DATA_FILE']));
-    for ($i = 0; $i < count($list); $i++) {
-      $list[$i]->done = false;
-    }
-    $this->rewrite_list($list);
-    $this->echo_list();
-    die;
+  function handle_remove_all() {
+    $this->data_file_list = [];
   }
 
-  function add_items_handler() {
-    if(!is_array($this->request_json)) {
-      $this->error_out("Must send an array of items.");
+  function handle_uncheck_all() {
+    for ($i = 0; $i < count($this->data_file_list); $i++) {
+      $this->data_file_list[$i]->done = false;
     }
-    $list = $this->json_decode(file_get_contents($_ENV['DATA_FILE']));
-    for ($ri = 0; $ri < count($this->request_json); $ri++) {
-      $existing_ids = [];
-      for ($li = 0; $li < count($list); $li++) {
-        if($this->request_json[$ri]?->id === $list[$li]->id) {
-          array_push($existing_ids, $this->request_json[$ri]?->id);
-        }
-      }
-      if(count($existing_ids)) {
-        $this->error_out(
-          'These ids already exist: '.implode(', ', $existing_ids)
+  }
+
+  function handle_add_item($payload) {
+    for ($li = 0; $li < count($this->data_file_list); $li++) {
+      if($payload->id === $this->data_file_list[$li]->id) {
+        $this->add_error(
+          'Could not add item because id '.$payload->id.' is already taken'
         );
+        return;
       }
-      $list[] = $this->request_json[$ri];
     }
-    $this->rewrite_list($list);
-    $this->echo_list();
-    die;
+    $this->data_file_list[] = $payload;
   }
 
-  function set_request_json() {
-    $body = file_get_contents('php://input');
-    $this->request_json = $this->json_decode($body);
-
-    if(!$this->request_json) {
-      $this->error_out("Could not parse JSON in request.");
+  function handle_edit_item($payload) {
+    $found_item = false;
+    for ($li = 0; $li < count($this->data_file_list); $li++) {
+      if($payload->id === $this->data_file_list[$li]->id) {
+        $found_item = true;
+        $this->data_file_list[$li]->name = $payload->name;
+        $this->data_file_list[$li]->done = $payload->done;
+      }
     }
+    if(!$found_item)
+      $this->add_error('Could not edit item with id of '.$payload->id.' because no item with that id was found.');
+  }
+
+  function handle_remove_item($payload) {
+    $idx = null;
+    for ($li = 0; $li < count($this->data_file_list); $li++) {
+      if($payload === $this->data_file_list[$li]->id) {
+        $idx = $li;
+      }
+    }
+    if($idx === null) {
+      $this->add_error('Could not remove item with id of '.$payload.' because no itemdwith that id was found.');
+      return;
+    }
+      
+    array_splice($this->data_file_list, $idx, 1);
+  }
+
+  function setup() {
+    $body = file_get_contents('php://input');
+    $this->request = $this->json_decode($body);
+    $data_file_list_json = file_get_contents($_ENV['DATA_FILE']);
+    $this->data_file_list = $this->json_decode($data_file_list_json);
+    if(!$this->request)
+      $this->error_out('Missing request body.');
+    if(!is_array($this->data_file_list))
+      $this->error_out('Cannot find data file.');
+    if(!$this->request->requests)
+      $this->error_out('Missing requests field.');
+    if(!is_array($this->request->requests))
+      $this->error_out('Requests field not in form of an array.');
   }
 
   function preliminary_checks() {
@@ -157,20 +186,25 @@ class BMWList {
     return json_decode($string);
   }
 
-  function echo_list() {
-    echo file_get_contents($_ENV['DATA_FILE']);
-  }
-
-  function rewrite_list(array $list) {
-    file_put_contents($_ENV['DATA_FILE'], $this->json_encode($list));
+  function rewrite_list() {
+    file_put_contents(
+      $_ENV['DATA_FILE'],
+      $this->json_encode(
+        $this->data_file_list
+      )
+    );
   }
 
   function error_out(string $message) {
     echo $this->json_encode([
-      "success" => false,
-      "error" => $message
+      "data" => null,
+      "errors" => [$message]
     ]);
     die;
+  }
+
+  function add_error(string $message) {
+    $this->errors[] = $message;
   }
 
   function dd(mixed $var) {
@@ -184,5 +218,5 @@ class BMWList {
   }
 }
 
-$bmw_list = new BMWList();
+$bmw_list = new BMWListApp();
 $bmw_list->run();
