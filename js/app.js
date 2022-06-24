@@ -19,11 +19,7 @@ const app = createApp({
   watch: {
     hasToken(val) {
       if (val) {
-        this.$nextTick(() => {
-          this.$refs['addFormInput'].focus();
-          this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
-        });
-
+        this.focusAddForm();
         this.getItemsFromServer();
       }
     }
@@ -69,6 +65,7 @@ const app = createApp({
           this.isAuthenticated = true;
           this.items = resp.data;
           setItems(this.items);
+          this.focusAddForm();
         }
       } catch (err) {
         console.error(err);
@@ -90,8 +87,14 @@ const app = createApp({
     },
 
     focusAddForm() {
-      this.$refs['addFormInput'].focus();
-      this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+      if (!('addFormInput' in this.$refs)) {
+        return;
+      }
+
+      this.$nextTick().then(() => {
+        this.$refs['addFormInput'].focus();
+        this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+      });
     },
 
     handlePasswordSubmit() {
@@ -108,6 +111,7 @@ const app = createApp({
         console.log('update-items', event);
         this.items = event.detail;
         setItems(this.items);
+        //this.focusAddForm();
       });
     },
 
