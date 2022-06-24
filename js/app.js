@@ -1,19 +1,40 @@
-import { getItems, setItems } from './data.js';
+import {
+  initQueue,
+  queueRequest,
+  RequestType,
+  sendRequests,
+  setItems
+} from './data.js';
 import { assignRandomId } from './idHelpers.js';
 
 const { createApp } = Vue;
 
+export const eventBus = createApp();
+
 const app = createApp({
   data: () => ({
     // structure of item is {name: 'foo', done: false}
-    items: [
-      // { name: 'Milk', done: false },
-      // { name: 'Eggs', done: false },
-      // { name: 'Some kind of longer item name that is gonna wrap', done: false }
-    ],
+    items: [],
+    text: '',
     editingItemId: null, // id string
-    text: ''
+    isAuthenticated: false,
+    hasToken: false,
+    password: ''
   }),
+
+  watch: {
+    hasToken(val) {
+      if (val) {
+        this.$nextTick(() => {
+          this.$refs['addFormInput'].focus();
+          this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+        });
+
+        this.getItemsFromServer();
+        initQueue();
+      }
+    }
+  },
 
   methods: {
     addItem() {
@@ -30,18 +51,31 @@ const app = createApp({
       );
 
       this.text = '';
-      this.$refs['addFormInput'].focus();
-      this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+      this.focusAddForm();
 
       this.items.push(item);
-      //queueRequest(RequestType.addItems, [item]);
+      queueRequest(RequestType.addItem, item);
       setItems(this.items);
     },
 
     checkItem(item, event) {
       item.done = event.target.checked;
-      //queueRequest(RequestType.editItems, [item]);
+      queueRequest(RequestType.editItem, item);
       setItems(this.items);
+    },
+
+    async getItemsFromServer() {
+      const resp = await sendRequests([
+        {
+          requestType: RequestType.getItems
+        }
+      ]);
+
+      if (!resp.errors.length && resp.data) {
+        this.isAuthenticated = true;
+        this.items = resp.data;
+        setItems(this.items);
+      }
     },
 
     editItem(editedItem) {
@@ -58,6 +92,27 @@ const app = createApp({
       setItems(this.items);
     },
 
+    focusAddForm() {
+      this.$refs['addFormInput'].focus();
+      this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+    },
+
+    handlePasswordSubmit() {
+      if (!this.password) {
+        return;
+      }
+
+      localStorage.setItem('list-app-token', this.password);
+      this.hasToken = true;
+    },
+
+    itemsUpdateListener() {
+      window.addEventListener('update-items', (event) => {
+        this.items = event.detail;
+        setItems(this.items);
+      });
+    },
+
     removeAllItems() {
       const yes = confirm('Are you sure you want to remove all items?');
 
@@ -71,7 +126,7 @@ const app = createApp({
 
     removeItem(id) {
       this.items = this.items.filter((item) => item.id !== id);
-      //queueRequest(RequestType.removeItems, [id])
+      queueRequest(RequestType.removeItem, [id]);
       setItems(this.items);
     },
 
@@ -91,13 +146,13 @@ const app = createApp({
   },
 
   created() {
-    //initQueue();
-    this.items = getItems() || [];
-  },
+    const token = localStorage.getItem('list-app-token');
 
-  mounted() {
-    this.$refs['addFormInput'].focus();
-    this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+    if (!token) {
+      return;
+    }
+
+    this.hasToken = true;
   }
 });
 

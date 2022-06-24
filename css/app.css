@@ -25,6 +25,10 @@ html {
   max-width: 500px;
 }
 
+.flex {
+  display: flex;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;

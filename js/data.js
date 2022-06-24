@@ -10,6 +10,32 @@ export const setItems = (items) => {
   saveObject('list-items', items);
 };
 
+/* API Helpers */
+
+export const sendRequests = async (requests) => {
+  try {
+    const token = localStorage.getItem('list-app-token');
+
+    if (!token) {
+      return { errors: ['Missing token.'] };
+    }
+
+    const resp = await fetch('api.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'App-Token': token
+      },
+      body: JSON.stringify({ requests })
+    });
+
+    return await resp.json();
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+};
+
 /* Request Queue */
 
 let queue = [];
@@ -25,14 +51,14 @@ const setQueue = (queue) => {
 
 export const RequestType = {
   getItems: 'getItems',
-  addItems: 'addItems',
-  editItems: 'editItems',
-  removeItems: 'removeItems',
+  addItem: 'addItem',
+  editItem: 'editItem',
+  removeItem: 'removeItem',
   removeAll: 'removeAll',
   uncheckAll: 'uncheckAll'
 };
 
-export const queueRequest = (requestType, payload) => {
+export const queueRequest = (requestType, payload = null) => {
   queue.push({
     requestType,
     payload
@@ -54,22 +80,15 @@ export const processQueue = async () => {
   try {
     const requests = [...queue];
 
-    const resp = await fetch('api.php', {
-      method: 'POST',
-      body: JSON.stringify({ requests })
-    });
+    const resp = await sendRequests(requests);
 
-    const data = resp.json();
-
-    if (!data.success) {
-      // put items back into queue
-      queue = [...requests, ...queue];
-      setQueue(queue);
+    if (resp.data) {
+      const updateEvent = new CustomEvent('update-items', {
+        detail: resp.data
+      });
+      window.dispatchEvent(updateEvent);
     }
   } catch (err) {
-    // put items back into queue
-    queue = [...requests, ...queue];
-    setQueue(queue);
-    throw new Error(err);
+    console.error(err);
   }
 };
