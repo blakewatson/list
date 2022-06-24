@@ -105,6 +105,7 @@ const app = createApp({
 
     itemsUpdateListener() {
       window.addEventListener('update-items', (event) => {
+        console.log('update-items', event);
         this.items = event.detail;
         setItems(this.items);
       });
@@ -142,6 +143,7 @@ const app = createApp({
   },
 
   created() {
+    this.itemsUpdateListener();
     const token = localStorage.getItem('list-app-token');
 
     if (!token) {
