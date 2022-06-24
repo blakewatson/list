@@ -91,6 +91,8 @@ class BMWListApp {
         $this->handle_add_item($request->payload);
         break;
       case 'editItem':
+        // sleep(10);
+        // die;
         $this->handle_edit_item($request->payload);
         break;
       case 'removeItem':

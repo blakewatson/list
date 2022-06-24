@@ -1,10 +1,4 @@
-import {
-  initQueue,
-  queueRequest,
-  RequestType,
-  sendRequests,
-  setItems
-} from './data.js';
+import { queue as q, RequestType, sendRequests, setItems } from './data.js';
 import { assignRandomId } from './idHelpers.js';
 
 const { createApp } = Vue;
@@ -31,7 +25,6 @@ const app = createApp({
         });
 
         this.getItemsFromServer();
-        initQueue();
       }
     }
   },
@@ -54,27 +47,31 @@ const app = createApp({
       this.focusAddForm();
 
       this.items.push(item);
-      queueRequest(RequestType.addItem, item);
+      q.request(RequestType.addItem, item);
       setItems(this.items);
     },
 
     checkItem(item, event) {
       item.done = event.target.checked;
-      queueRequest(RequestType.editItem, item);
+      q.request(RequestType.editItem, item);
       setItems(this.items);
     },
 
     async getItemsFromServer() {
-      const resp = await sendRequests([
-        {
-          requestType: RequestType.getItems
-        }
-      ]);
+      try {
+        const resp = await sendRequests([
+          {
+            requestType: RequestType.getItems
+          }
+        ]);
 
-      if (!resp.errors.length && resp.data) {
-        this.isAuthenticated = true;
-        this.items = resp.data;
-        setItems(this.items);
+        if (!resp.errors.length && resp.data) {
+          this.isAuthenticated = true;
+          this.items = resp.data;
+          setItems(this.items);
+        }
+      } catch (err) {
+        console.error(err);
       }
     },
 
@@ -88,7 +85,7 @@ const app = createApp({
       });
 
       this.editingItemId = null;
-      //queueRequest(RequestType.editItems, [editedItem]);
+      q.request(RequestType.editItem, editedItem);
       setItems(this.items);
     },
 
@@ -117,16 +114,15 @@ const app = createApp({
       const yes = confirm('Are you sure you want to remove all items?');
 
       if (yes) {
-        const ids = this.items.map((item) => item.id);
         this.items = [];
-        //queueRequest(RequestType.removeItems, ids)
+        q.request(RequestType.removeAll);
         setItems([]);
       }
     },
 
     removeItem(id) {
       this.items = this.items.filter((item) => item.id !== id);
-      queueRequest(RequestType.removeItem, [id]);
+      q.request(RequestType.removeItem, id);
       setItems(this.items);
     },
 
@@ -139,7 +135,7 @@ const app = createApp({
 
       if (yes) {
         this.items.forEach((item) => (item.done = false));
-        //queueRequest(RequestType.editItems, [this.items])
+        q.request(RequestType.uncheckAll);
         setItems(this.items);
       }
     }

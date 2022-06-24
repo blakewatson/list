@@ -12,42 +12,34 @@ export const setItems = (items) => {
 
 /* API Helpers */
 
-export const sendRequests = async (requests) => {
-  try {
-    const token = localStorage.getItem('list-app-token');
+export const sendRequests = async (requests, abortSignal = null) => {
+  const token = localStorage.getItem('list-app-token');
 
-    if (!token) {
-      return { errors: ['Missing token.'] };
-    }
-
-    const resp = await fetch('api.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'App-Token': token
-      },
-      body: JSON.stringify({ requests })
-    });
-
-    return await resp.json();
-  } catch (err) {
-    console.error(err);
-    return false;
+  if (!token) {
+    return { errors: ['Missing token.'] };
   }
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'App-Token': token
+    },
+    body: JSON.stringify({ requests })
+  };
+
+  if (abortSignal) {
+    options.signal = abortSignal;
+  }
+
+  const resp = await fetch('api.php', options);
+
+  console.log('sendRequests resp', resp);
+
+  return await resp.json();
 };
 
 /* Request Queue */
-
-let queue = [];
-
-// local storage of queue
-const getQueue = () => {
-  return loadObject('list-queue');
-};
-
-const setQueue = (queue) => {
-  saveObject('list-queue', queue);
-};
 
 export const RequestType = {
   getItems: 'getItems',
@@ -58,37 +50,92 @@ export const RequestType = {
   uncheckAll: 'uncheckAll'
 };
 
-export const queueRequest = (requestType, payload = null) => {
-  queue.push({
-    requestType,
-    payload
-  });
+class RequestQueue {
+  constructor() {
+    this.queue = this.getQueue();
+    this.currentRequest = null; // Promise | null
 
-  setQueue(queue);
-};
-
-// kick off processing of requests
-export const initQueue = () => {
-  queue = getQueue() || [];
-};
-
-export const processQueue = async () => {
-  if (!queue.length) {
-    return;
-  }
-
-  try {
-    const requests = [...queue];
-
-    const resp = await sendRequests(requests);
-
-    if (resp.data) {
-      const updateEvent = new CustomEvent('update-items', {
-        detail: resp.data
-      });
-      window.dispatchEvent(updateEvent);
+    if (this.queue.length) {
+      this.sendQueue();
     }
-  } catch (err) {
-    console.error(err);
+
+    // send any outstanding requests every five seconds
+    setInterval(() => {
+      this.request(RequestType.getItems);
+    }, 5000);
   }
-};
+
+  getQueue() {
+    return loadObject('list-queue') || [];
+  }
+
+  async sendQueue() {
+    if (!this.queue.length || this.currentRequest) {
+      return;
+    }
+
+    // grab existing requests and empty the queue
+    const requests = [...this.queue];
+    this.queue = [];
+
+    // attempt to send the requests for ten seconds
+    const abort = new AbortController();
+    setTimeout(() => abort.abort(), 8000);
+
+    console.log('sending queued requests', requests);
+    this.currentRequest = sendRequests(requests, abort.signal);
+
+    try {
+      const resp = await this.currentRequest;
+      this.setQueue(); // save queue to localStorage
+
+      console.log('response received', resp);
+
+      if (resp.data) {
+        console.log('response has data', resp.data);
+        const updateEvent = new CustomEvent('update-items', {
+          detail: resp.data
+        });
+        window.dispatchEvent(updateEvent);
+      }
+
+      this.currentRequest = null;
+
+      // if they are more requests, send them now
+      if (this.queue.length) {
+        this.sendQueue();
+      }
+    } catch (err) {
+      console.error(err);
+
+      this.currentRequest = null;
+
+      // if an abort error, put requests back in the queue
+      if (err.name === 'AbortError') {
+        console.log('request aborted. putting requests back in the queue');
+        this.queue = [...requests, ...this.queue];
+        console.log(this.queue);
+        this.setQueue();
+        this.sendQueue();
+      }
+    }
+  }
+
+  request(requestType, payload = null) {
+    this.queue.push({
+      requestType,
+      payload
+    });
+
+    console.log('added to queue', requestType, payload);
+
+    this.setQueue(); // save queue to localStorage
+    this.sendQueue(); // send requests to the server
+  }
+
+  setQueue() {
+    saveObject('list-queue', this.queue);
+  }
+}
+
+export const queue = new RequestQueue();
