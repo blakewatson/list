@@ -193,7 +193,7 @@ if (!window.location.origin.includes('localhost')) {
   if ('serviceWorker' in navigator) {
     console.log('Registering service worker...');
     navigator.serviceWorker
-      .register('/sw.js')
+      .register('sw.js')
       .then((registration) =>
         console.log('Server worker registered.', registration)
       )
