@@ -1,4 +1,4 @@
-const cacheName = 'v2';
+const cacheName = 'v8';
 console.log(`Worker ${cacheName} downloaded.`);
 
 const assets = [
