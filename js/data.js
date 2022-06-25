@@ -54,7 +54,13 @@ class RequestQueue {
   constructor() {
     this.queue = this.getQueue();
     this.currentRequest = null; // Promise | null
+  }
 
+  getQueue() {
+    return loadObject('list-queue') || [];
+  }
+
+  initPolling() {
     if (this.queue.length) {
       this.sendQueue();
     }
@@ -63,10 +69,6 @@ class RequestQueue {
     setInterval(() => {
       this.request(RequestType.getItems);
     }, 5000);
-  }
-
-  getQueue() {
-    return loadObject('list-queue') || [];
   }
 
   async sendQueue() {

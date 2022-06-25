@@ -21,6 +21,7 @@ const app = createApp({
       if (val) {
         this.focusAddForm();
         this.getItemsFromServer();
+        q.initPolling();
       }
     }
   },
