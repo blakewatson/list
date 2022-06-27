@@ -34,7 +34,7 @@ const app = createApp({
 
       const item = assignRandomId(
         {
-          name: this.text,
+          name: this.text.trim(),
           done: false
         },
         this.items
@@ -93,8 +93,11 @@ const app = createApp({
       }
 
       this.$nextTick().then(() => {
+        this.$refs['fakeInput'].focus();
         this.$refs['addFormInput'].focus();
-        this.$refs['addFormInput'].scrollIntoView({ block: 'center' });
+        this.$refs['addFormInput'].scrollIntoView({
+          block: 'center'
+        });
       });
     },
 
@@ -156,6 +159,12 @@ const app = createApp({
     }
 
     this.hasToken = true;
+  },
+
+  mounted() {
+    setTimeout(() => {
+      document.querySelector('#app').classList.remove('animation-preload');
+    }, 1000);
   }
 });
 

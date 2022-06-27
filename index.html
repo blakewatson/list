@@ -15,7 +15,7 @@
   </head>
 
   <body>
-    <div id="app">
+    <div class="animation-preload" id="app">
       <template v-if="hasToken">
         <div class="app-header">
           <h1 class="site-title">Grocery List</h1>
@@ -31,8 +31,8 @@
           </div>
         </div>
 
-        <ul class="list">
-          <li class="list-item" v-for="(item, idx) in items">
+        <transition-group class="list transition-group" name="list" tag="ul">
+          <li :key="item.id" class="list-item" v-for="(item, idx) in items">
             <label
               :class="{ done: item.done }"
               class="list-item-activator"
@@ -46,13 +46,11 @@
               />
               <div class="list-item-name">{{ item.name }}</div>
             </label>
-
             <app-edit-form
               :item="item"
               @edited="editItem"
               v-else
             ></app-edit-form>
-
             <button
               @click="showEditForm(item.id)"
               class="emoji-button pure-button ml-xs"
@@ -60,7 +58,6 @@
             >
               ✏️
             </button>
-
             <button
               @click="removeItem(item.id)"
               class="emoji-button pure-button ml-xxs"
@@ -69,7 +66,7 @@
               ❌
             </button>
           </li>
-        </ul>
+        </transition-group>
 
         <form
           @submit.prevent="addItem"
@@ -85,8 +82,13 @@
               v-model="text"
             />
 
-            <button class="add-button emoji-button pure-button">➕</button>
+            <button class="add-button emoji-button pure-button" type="submit">
+              ➕
+            </button>
           </fieldset>
+
+          <!-- ew -->
+          <input class="fake-input" ref="fakeInput" type="text" />
         </form>
       </template>
 

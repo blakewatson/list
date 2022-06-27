@@ -82,7 +82,7 @@ class RequestQueue {
 
     // attempt to send the requests for ten seconds
     const abort = new AbortController();
-    setTimeout(() => abort.abort(), 8000);
+    setTimeout(() => abort.abort(), 10000);
 
     console.log('sending queued requests', requests);
     this.currentRequest = sendRequests(requests, abort.signal);

@@ -73,6 +73,8 @@ html {
 .list-item {
   display: flex;
   border-bottom: 1px solid #ccc;
+  min-height: 43px;
+  background-color: #fff;
 }
 
 .done .list-item-name {
@@ -96,10 +98,61 @@ html {
 }
 
 .item-form {
+  position: relative;
   width: 100%;
 }
 
 .item-form fieldset {
   display: flex;
   padding: 0.5em 0;
+}
+
+.fake-input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 0;
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* list form animation */
+
+.animation-preload * {
+  transition: none !important;
+}
+
+.list-item {
+  position: relative;
+  z-index: 1;
+}
+
+.list-move {
+  transition: transform 0.2s;
+}
+
+.list-enter-active {
+  transition: transform 0.2s;
+}
+
+.list-enter-from {
+  transform: translateY(50%);
+}
+
+.list-enter-to {
+  transform: translateY(0);
+}
+
+.list-leave-active {
+  position: absolute;
+  width: calc(100% - 2rem);
+  transition: all 0.2s ease-out;
+  z-index: -1;
+}
+
+.list-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
 }
