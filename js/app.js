@@ -13,7 +13,8 @@ const app = createApp({
     editingItemId: null, // id string
     isAuthenticated: false,
     hasToken: false,
-    password: ''
+    password: '',
+    preventListAnimation: true
   }),
 
   watch: {
@@ -41,36 +42,27 @@ const app = createApp({
       );
 
       this.text = '';
-      this.focusAddForm();
 
       this.items.push(item);
+
+      this.$nextTick().then(() => {
+        this.focusAddForm();
+      });
+
       q.request(RequestType.addItem, item);
       setItems(this.items);
+    },
+
+    areItemsEqual(newItems) {
+      const existingJson = JSON.stringify(this.items);
+      const newJson = JSON.stringify(newItems);
+      return existingJson === newJson;
     },
 
     checkItem(item, event) {
       item.done = event.target.checked;
       q.request(RequestType.editItem, item);
       setItems(this.items);
-    },
-
-    async getItemsFromServer() {
-      try {
-        const resp = await sendRequests([
-          {
-            requestType: RequestType.getItems
-          }
-        ]);
-
-        if (!resp.errors.length && resp.data) {
-          this.isAuthenticated = true;
-          this.items = resp.data;
-          setItems(this.items);
-          this.focusAddForm();
-        }
-      } catch (err) {
-        console.error(err);
-      }
     },
 
     editItem(editedItem) {
@@ -95,10 +87,29 @@ const app = createApp({
       this.$nextTick().then(() => {
         this.$refs['fakeInput'].focus();
         this.$refs['addFormInput'].focus();
-        this.$refs['addFormInput'].scrollIntoView({
-          block: 'center'
-        });
+        // this.$refs['addFormInput'].scrollIntoView({
+        //   block: 'center'
+        // });
       });
+    },
+
+    async getItemsFromServer() {
+      try {
+        const resp = await sendRequests([
+          {
+            requestType: RequestType.getItems
+          }
+        ]);
+
+        if (!resp.errors.length && resp.data) {
+          this.isAuthenticated = true;
+          this.items = resp.data;
+          setItems(this.items);
+          this.focusAddForm();
+        }
+      } catch (err) {
+        console.error(err);
+      }
     },
 
     handlePasswordSubmit() {
@@ -113,10 +124,23 @@ const app = createApp({
     itemsUpdateListener() {
       window.addEventListener('update-items', (event) => {
         console.log('update-items', event);
-        this.items = event.detail;
-        setItems(this.items);
-        //this.focusAddForm();
+
+        if (this.areItemsEqual(event.detail)) {
+          return;
+        }
+
+        this.preventListAnimation = true;
+
+        this.$nextTick().then(() => {
+          this.items = event.detail;
+          setItems(this.items);
+          this.preventListAnimation = false;
+        });
       });
+    },
+
+    onAfterEnter() {
+      // this.focusAddForm();
     },
 
     removeAllItems() {
@@ -163,7 +187,7 @@ const app = createApp({
 
   mounted() {
     setTimeout(() => {
-      document.querySelector('#app').classList.remove('animation-preload');
+      this.preventListAnimation = false;
     }, 1000);
   }
 });

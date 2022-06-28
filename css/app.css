@@ -65,26 +65,21 @@ html {
 }
 
 .list {
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #eee;
   padding-left: 0;
   list-style: none;
 }
 
 .list-item {
   display: flex;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #eee;
   min-height: 43px;
   background-color: #fff;
 }
 
-.done .list-item-name {
-  text-decoration: line-through;
-  color: #777;
-}
-
 .list-item-activator {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   padding: 0.5em;
 }
@@ -92,9 +87,13 @@ html {
 .list input[type='checkbox'] {
   flex-shrink: 0;
   position: relative;
-  top: 0.1em;
   width: 1em;
   height: 1em;
+}
+
+.done .list-item-name {
+  text-decoration: line-through;
+  color: #777;
 }
 
 .item-form {
@@ -120,7 +119,7 @@ html {
 
 /* list form animation */
 
-.animation-preload * {
+.prevent-list-animation * {
   transition: none !important;
 }
 

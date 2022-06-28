@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Groceries</title>
-    <link rel="manifest" href="/groceries/manifest.json" />
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="css/pure-nr-min.css" />
     <link rel="stylesheet" href="css/pure-grids-min.css" />
     <link rel="stylesheet" href="css/spacing.css" />
@@ -15,7 +15,7 @@
   </head>
 
   <body>
-    <div class="animation-preload" id="app">
+    <div id="app">
       <template v-if="hasToken">
         <div class="app-header">
           <h1 class="site-title">Grocery List</h1>
@@ -31,13 +31,20 @@
           </div>
         </div>
 
-        <transition-group class="list transition-group" name="list" tag="ul">
-          <li :key="item.id" class="list-item" v-for="(item, idx) in items">
-            <label
-              :class="{ done: item.done }"
-              class="list-item-activator"
-              v-if="item.id !== editingItemId"
-            >
+        <transition-group
+          :class="{'prevent-list-animation': preventListAnimation }"
+          @after-enter="onAfterEnter"
+          class="list transition-group"
+          name="list"
+          tag="ul"
+        >
+          <li
+            :class="{ done: item.done }"
+            :key="item.id"
+            class="list-item"
+            v-for="(item, idx) in items"
+          >
+            <label class="list-item-activator" v-if="item.id !== editingItemId">
               <input
                 :checked="item.done"
                 @input="checkItem(item, $event)"
