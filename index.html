@@ -33,7 +33,6 @@
 
         <transition-group
           :class="{'prevent-list-animation': preventListAnimation }"
-          @after-enter="onAfterEnter"
           class="list transition-group"
           name="list"
           tag="ul"
@@ -59,8 +58,15 @@
               v-else
             ></app-edit-form>
             <button
+              @click="moveItemToTop(item)"
+              class="emoji-button pure-button ml-xxs"
+              v-if="!editingItemId"
+            >
+              🔝
+            </button>
+            <button
               @click="showEditForm(item.id)"
-              class="emoji-button pure-button ml-xs"
+              class="emoji-button pure-button ml-xxs"
               v-if="!editingItemId"
             >
               ✏️

@@ -123,8 +123,6 @@ const app = createApp({
 
     itemsUpdateListener() {
       window.addEventListener('update-items', (event) => {
-        console.log('update-items', event);
-
         if (this.areItemsEqual(event.detail)) {
           return;
         }
@@ -139,8 +137,14 @@ const app = createApp({
       });
     },
 
-    onAfterEnter() {
-      // this.focusAddForm();
+    moveItemToTop(itemToMove) {
+      this.items = this.items.filter((item) => item.id !== itemToMove.id);
+      this.items.unshift(itemToMove);
+      q.request(
+        RequestType.sort,
+        this.items.map((item) => item.id)
+      );
+      setItems(this.items);
     },
 
     removeAllItems() {

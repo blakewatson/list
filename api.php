@@ -31,6 +31,7 @@ Need to accept these request types:
 'editItem' - payload of { id: "blah", "name": "Foo", "done": true }
 'removeItem' - payload of id
 'removeAll' - no payload
+'sort' - payload of [ ...ids ]
 'uncheckAll' - no payload
 
 Response should be JSON in the form of:
@@ -98,6 +99,9 @@ class BMWListApp {
       case 'removeItem':
         $this->handle_remove_item($request->payload);
         break;
+      case 'sort':
+        $this->handle_sort($request->payload);
+        break;
     }
   }
 
@@ -134,6 +138,24 @@ class BMWListApp {
     }
     if(!$found_item)
       $this->add_error('Could not edit item with id of '.$payload->id.' because no item with that id was found.');
+  }
+
+  function handle_sort($payload) {
+    $new_list = array();
+
+    foreach ($payload as $id) {
+      $key = array_search($id, array_column($this->data_file_list, 'id'));
+
+      if ($key === false) {
+        $this->add_error('One of the provided IDs, '.$id.', does not exist.');
+        error_log('One of the provided IDs, '.$id.', does not exist.');
+        return null;
+      }
+
+      $new_list[] = $this->data_file_list[$key];
+    }
+
+    $this->data_file_list = $new_list;
   }
 
   function handle_remove_item($payload) {

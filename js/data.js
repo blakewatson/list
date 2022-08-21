@@ -34,8 +34,6 @@ export const sendRequests = async (requests, abortSignal = null) => {
 
   const resp = await fetch('api.php', options);
 
-  console.log('sendRequests resp', resp);
-
   return await resp.json();
 };
 
@@ -47,6 +45,7 @@ export const RequestType = {
   editItem: 'editItem',
   removeItem: 'removeItem',
   removeAll: 'removeAll',
+  sort: 'sort',
   uncheckAll: 'uncheckAll'
 };
 
@@ -67,6 +66,7 @@ class RequestQueue {
 
     // send any outstanding requests every five seconds
     setInterval(() => {
+      console.log('Polling for data at ' + new Date());
       this.request(RequestType.getItems);
     }, 5000);
   }
@@ -84,17 +84,13 @@ class RequestQueue {
     const abort = new AbortController();
     setTimeout(() => abort.abort(), 10000);
 
-    console.log('sending queued requests', requests);
     this.currentRequest = sendRequests(requests, abort.signal);
 
     try {
       const resp = await this.currentRequest;
       this.setQueue(); // save queue to localStorage
 
-      console.log('response received', resp);
-
       if (resp.data) {
-        console.log('response has data', resp.data);
         const updateEvent = new CustomEvent('update-items', {
           detail: resp.data
         });
@@ -114,9 +110,7 @@ class RequestQueue {
 
       // if an abort error, put requests back in the queue
       if (err.name === 'AbortError') {
-        console.log('request aborted. putting requests back in the queue');
         this.queue = [...requests, ...this.queue];
-        console.log(this.queue);
         this.setQueue();
         this.sendQueue();
       }
@@ -128,8 +122,6 @@ class RequestQueue {
       requestType,
       payload
     });
-
-    console.log('added to queue', requestType, payload);
 
     this.setQueue(); // save queue to localStorage
     this.sendQueue(); // send requests to the server
